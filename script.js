@@ -1,11 +1,12 @@
-// 🔑 Configuración de Firebase (usa tus credenciales reales aquí)
+// 🔑 Configuración de Firebase con tus credenciales reales
 const firebaseConfig = {
   apiKey: "AIzaSyAbO_rEyrHMhAC68Qflr6ZXByVdYKSA2Ao",
-  authDomain: "barra-chuy-eventos.firebaseapp.com",
-  projectId: "barra-chuy-eventos",
-  storageBucket: "barra-chuy-eventos.appspot.com",
+  authDomain: "barra-del-chuy-eventos.firebaseapp.com",
+  projectId: "barra-del-chuy-eventos",
+  storageBucket: "barra-del-chuy-eventos.firebasestorage.app",
   messagingSenderId: "414247219366",
-  appId: "1:414247219366:web:4fb5d257effc6ed2db0467"
+  appId: "1:414247219366:web:4fb5d257effc6ed2db0467",
+  measurementId: "G-2L680N3SE9"
 };
 
 // Inicializar Firebase
@@ -14,8 +15,9 @@ firebase.initializeApp(firebaseConfig);
 // Conectar con Firestore
 const db = firebase.firestore();
 
-// Inicializar mapa con Leaflet
 let map;
+
+// Inicializar mapa (Leaflet)
 function initMap() {
   map = L.map('map').setView([-33.7, -53.45], 14); // Barra del Chuy
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -28,7 +30,6 @@ function initMap() {
       e.latlng.lat + "," + e.latlng.lng;
   });
 }
-initMap();
 
 // Mostrar lista de eventos
 function showEvents() {
@@ -36,9 +37,10 @@ function showEvents() {
   renderEvents();
 }
 
-// Mostrar formulario
+// Mostrar formulario y reiniciar mapa
 function showForm() {
   document.getElementById('event-form').style.display = 'block';
+  setTimeout(initMap, 200); // espera para que el div esté visible
 }
 
 // Guardar evento en Firestore
@@ -61,7 +63,7 @@ function saveEvent() {
   });
 }
 
-// Renderizar eventos desde Firestore
+// Renderizar eventos desde Firestore con botón eliminar
 function renderEvents() {
   db.collection("eventos").orderBy("date").onSnapshot(snapshot => {
     const list = document.getElementById('event-list');
@@ -69,9 +71,21 @@ function renderEvents() {
     snapshot.forEach(doc => {
       const ev = doc.data();
       list.innerHTML += `
-        <p><strong>${ev.date} ${ev.time}</strong> - ${ev.title} (${ev.category})<br>
-        ${ev.description}<br>
-        📍 ${ev.location}</p>`;
+        <p>
+          <strong>${ev.date} ${ev.time}</strong> - ${ev.title} (${ev.category})<br>
+          ${ev.description}<br>
+          📍 ${ev.location}<br>
+          <button onclick="deleteEvent('${doc.id}')">🗑️ Eliminar</button>
+        </p>`;
     });
+  });
+}
+
+// Eliminar evento
+function deleteEvent(id) {
+  db.collection("eventos").doc(id).delete().then(() => {
+    alert("Evento eliminado");
+  }).catch(err => {
+    console.error("Error al eliminar:", err);
   });
 }
