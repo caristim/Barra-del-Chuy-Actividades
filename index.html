@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Balneario Barra del Chuy – Eventos Locales</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <!-- Leaflet.js -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+  <div class="overlay">
+    <h1>Balneario Barra del Chuy</h1>
+    <h2>Eventos Locales</h2>
+    <p>Tu comunidad, tus actividades, tu lugar</p>
+    <button onclick="showEvents()">📅 Ver eventos</button>
+    <button onclick="showForm()">➕ Agregar evento</button>
+  </div>
+
+  <div id="event-list"></div>
+  <div id="event-form" style="display:none;">
+    <input type="text" id="title" placeholder="Título del evento">
+    <select id="category">
+      <option value="cultura">🎶 Cultura y música</option>
+      <option value="playa">🏖️ Playa y recreación</option>
+      <option value="feria">🛍️ Ferias y mercados</option>
+      <option value="comunidad">🧑‍🤝‍🧑 Reuniones comunitarias</option>
+    </select>
+    <input type="date" id="date">
+    <input type="time" id="time">
+    <textarea id="description" placeholder="Descripción"></textarea>
+    <input type="text" id="location" placeholder="Ubicación (lat,lng)">
+    <div id="map" style="height:300px;"></div>
+    <button onclick="saveEvent()">Guardar</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
