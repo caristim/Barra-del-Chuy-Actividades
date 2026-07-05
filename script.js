@@ -40,7 +40,13 @@ function showEvents() {
 // Mostrar formulario y reiniciar mapa
 function showForm() {
   document.getElementById('event-form').style.display = 'block';
-  setTimeout(initMap, 200); // espera para que el div esté visible
+  setTimeout(() => {
+    if (!map) {
+      initMap(); // inicializa solo una vez
+    } else {
+      map.invalidateSize(); // reajusta el mapa si ya existe
+    }
+  }, 200);
 }
 
 // Guardar evento en Firestore
