@@ -4,12 +4,10 @@
   <meta charset="UTF-8">
   <title>Balneario Barra del Chuy – Eventos Locales</title>
   <link rel="stylesheet" href="style.css">
-  <!-- Firebase SDK -->
-<!-- Firebase App (compat) -->
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 
-<!-- Firestore (compat) -->
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <!-- Firebase SDK compat -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 
   <!-- Leaflet.js -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
@@ -25,6 +23,7 @@
   </div>
 
   <div id="event-list"></div>
+
   <div id="event-form" style="display:none;">
     <input type="text" id="title" placeholder="Título del evento">
     <select id="category">
@@ -41,6 +40,7 @@
     <button onclick="saveEvent()">Guardar</button>
   </div>
 
+  <!-- Tu script principal -->
   <script src="script.js"></script>
 </body>
 </html>
