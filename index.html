@@ -2,45 +2,50 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Balneario Barra del Chuy – Eventos Locales</title>
+  <title>Eventos Barra del Chuy</title>
   <link rel="stylesheet" href="style.css">
-
-  <!-- Firebase SDK compat -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
-  <!-- Leaflet.js -->
+  <link rel="manifest" href="manifest.json">
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </head>
 <body>
-  <div class="overlay">
-    <h1>Balneario Barra del Chuy</h1>
-    <h2>Eventos Locales</h2>
-    <p>Tu comunidad, tus actividades, tu lugar</p>
-    <button onclick="showEvents()">📅 Ver eventos</button>
-    <button onclick="showForm()">➕ Agregar evento</button>
-  </div>
-
-  <div id="event-list"></div>
+  <h1>Eventos en Barra del Chuy</h1>
+  <button onclick="showForm()">➕ Agregar evento</button>
 
   <div id="event-form" style="display:none;">
-    <input type="text" id="title" placeholder="Título del evento">
+    <label>Título del evento</label>
+    <input type="text" id="title" placeholder="Ej: Festival de música">
+
+    <label>Categoría</label>
     <select id="category">
       <option value="cultura">🎶 Cultura y música</option>
       <option value="playa">🏖️ Playa y recreación</option>
       <option value="feria">🛍️ Ferias y mercados</option>
-      <option value="comunidad">🧑‍🤝‍🧑 Reuniones comunitarias</option>
+      <option value="comunidad">🤝 Reuniones comunitarias</option>
     </select>
+
+    <label>Fecha</label>
     <input type="date" id="date">
+
+    <label>Hora</label>
     <input type="time" id="time">
-    <textarea id="description" placeholder="Descripción"></textarea>
-    <input type="text" id="location" placeholder="Ubicación (lat,lng)">
-    <div id="map"></div>
-    <button onclick="saveEvent()">Guardar</button>
+
+    <label>Descripción</label>
+    <textarea id="description" placeholder="Breve descripción"></textarea>
+
+    <label>Ubicación en mapa</label>
+    <div id="map" style="height:300px;"></div>
+    <input type="hidden" id="location">
+
+    <button onclick="saveEvent()">Guardar evento</button>
+    <button onclick="hideForm()">Cancelar</button>
   </div>
 
-  <!-- Script principal -->
+  <h2>Lista de eventos</h2>
+  <ul id="event-list"></ul>
+
   <script src="script.js"></script>
 </body>
 </html>
