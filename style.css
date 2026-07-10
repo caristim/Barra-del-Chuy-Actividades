@@ -37,15 +37,15 @@ button:hover {
 #event-form {
   display: none;
   position: fixed;
-  top: 5%; /* más arriba */
+  top: 2%;              /* más arriba */
   left: 50%;
   transform: translateX(-50%);
   background: white;
   color: black;
   padding: 20px;
   border-radius: 12px;
-  width: 420px;
-  max-height: 90%;
+  width: 440px;
+  max-height: 95%;
   overflow-y: auto;
   box-shadow: 0 0 25px rgba(0,0,0,0.6);
   z-index: 1000;
@@ -75,9 +75,14 @@ input, select, textarea {
   font-size: 14px;
 }
 
+/* Campo de subida de banner */
+#banner {
+  margin-top: 8px;
+}
+
 /* Mapa */
 #map {
-  height: 300px; /* más alto */
+  height: 320px;        /* más alto */
   margin-top: 10px;
   border: 2px solid #ddd;
   border-radius: 8px;
@@ -97,6 +102,14 @@ input, select, textarea {
 #event-list p {
   border-bottom: 1px solid #ccc;
   padding: 10px 0;
+}
+
+/* Banner dentro de la lista */
+#event-list img {
+  max-width: 100%;
+  border-radius: 10px;
+  margin-top: 10px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
 }
 
 /* Botón borrar evento */
