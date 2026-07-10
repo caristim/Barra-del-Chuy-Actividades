@@ -11,12 +11,12 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const storage = firebase.storage();
 
 // Coordenadas exactas Barra del Chuy
 const barraChuyCoords = [-33.7556, -53.3889];
 let map, marker;
 
-// Mostrar formulario
 function showForm() {
   document.getElementById('event-form').style.display = 'block';
 
@@ -37,12 +37,10 @@ function showForm() {
   }
 }
 
-// Ocultar formulario
 function hideForm() {
   document.getElementById('event-form').style.display = 'none';
 }
 
-// Guardar evento en Firestore
 function saveEvent() {
   const title = document.getElementById('title').value;
   const category = document.getElementById('category').value;
@@ -50,14 +48,32 @@ function saveEvent() {
   const time = document.getElementById('time').value;
   const description = document.getElementById('description').value;
   const location = document.getElementById('location').value;
+  const bannerFile = document.getElementById('banner').files[0];
 
   if (!title || !date || !time) {
     alert("Por favor completa título, fecha y hora.");
     return;
   }
 
+  if (bannerFile) {
+    // Subir banner a Firebase Storage
+    const storageRef = storage.ref('banners/' + bannerFile.name);
+    storageRef.put(bannerFile).then(snapshot => {
+      snapshot.ref.getDownloadURL().then(url => {
+        guardarEvento(title, category, date, time, description, location, url);
+      });
+    }).catch(error => {
+      console.error("Error al subir banner: ", error);
+      guardarEvento(title, category, date, time, description, location, null);
+    });
+  } else {
+    guardarEvento(title, category, date, time, description, location, null);
+  }
+}
+
+function guardarEvento(title, category, date, time, description, location, bannerUrl) {
   db.collection("eventos").add({
-    title, category, date, time, description, location
+    title, category, date, time, description, location, bannerUrl
   }).then(() => {
     alert("Evento guardado correctamente.");
     hideForm();
@@ -67,13 +83,11 @@ function saveEvent() {
   });
 }
 
-// Mostrar lista de eventos
 function showEvents() {
   document.getElementById('event-list').style.display = 'block';
   loadEvents();
 }
 
-// Cargar eventos desde Firestore
 function loadEvents() {
   const list = document.getElementById('event-list');
   list.innerHTML = "";
@@ -92,6 +106,11 @@ function loadEvents() {
           📍 ${ev.location}
       `;
 
+      // Mostrar banner si existe
+      if (ev.bannerUrl) {
+        html += `<br><img src="${ev.bannerUrl}" alt="Banner del evento" style="max-width:100%; border-radius:8px; margin-top:10px;">`;
+      }
+
       // Mostrar botón de borrar solo si el evento ya pasó
       if (fechaEvento < hoy) {
         html += `<br><button onclick="deleteEvent('${doc.id}')">🗑️ Borrar evento</button>`;
@@ -103,7 +122,6 @@ function loadEvents() {
   });
 }
 
-// Función para borrar evento
 function deleteEvent(id) {
   db.collection("eventos").doc(id).delete().then(() => {
     alert("Evento borrado correctamente.");
