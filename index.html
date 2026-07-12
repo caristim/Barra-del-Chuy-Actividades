@@ -2,66 +2,16 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Balneario Barra del Chuy – Eventos Locales</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
-  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      background: url('playa-barra-chuy.jpg') no-repeat center center fixed;
-      background-size: cover;
-      color: white;
-    }
-    .overlay {
-      background: rgba(0,0,0,0.5);
-      padding: 20px;
-    }
-    button {
-      margin: 10px;
-      padding: 15px;
-      font-size: 18px;
-      border: none;
-      border-radius: 8px;
-      background-color: #ff9800;
-      color: white;
-      cursor: pointer;
-    }
-    /* Ventana modal */
-    #event-form {
-      display: none;
-      position: fixed;
-      top: 10%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: white;
-      color: black;
-      padding: 20px;
-      border-radius: 10px;
-      width: 400px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-      z-index: 1000;
-    }
-    #map {
-      height: 250px;
-      margin-top: 10px;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-      font-weight: bold;
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      border-radius: 5px;
-      border: 1px solid #ccc;
-    }
-  </style>
+  <!-- Estilos propios -->
+  <link rel="stylesheet" href="style.css">
+  <!-- Firebase compat (v9) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
+  <!-- Leaflet CSS y JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
   <div class="overlay">
@@ -72,39 +22,35 @@
     <button onclick="showForm()">➕ Agregar evento</button>
   </div>
 
-  <!-- Ventana modal para agregar evento -->
-  <div id="event-form">
-    <h3>Agregar nuevo evento</h3>
-    <label>Título</label>
-    <input type="text" id="title" placeholder="Ej: Festival de música">
+  <!-- Lista de eventos -->
+  <div id="event-list"></div>
 
-    <label>Categoría</label>
+  <!-- Formulario de agregar evento -->
+  <div id="event-form" style="display:none;">
+    <h3>Nuevo evento</h3>
+    <input type="text" id="title" placeholder="Título del evento" required>
     <select id="category">
       <option value="cultura">🎶 Cultura y música</option>
       <option value="playa">🏖️ Playa y recreación</option>
       <option value="feria">🛍️ Ferias y mercados</option>
-      <option value="comunidad">🤝 Reuniones comunitarias</option>
+      <option value="comunidad">🧑‍🤝‍🧑 Reuniones comunitarias</option>
     </select>
+    <input type="date" id="date" required>
+    <input type="time" id="time" required>
+    <textarea id="description" placeholder="Descripción" rows="3"></textarea>
+    
+    <div class="location-group">
+      <label>Ubicación (lat, lng):</label>
+      <input type="text" id="location" placeholder="Ej: -33.749, -53.347">
+      <div id="map" style="height:300px; width:100%; margin:10px 0;"></div>
+      <small>Haz clic en el mapa o arrastra el marcador para elegir la ubicación.</small>
+    </div>
 
-    <label>Fecha</label>
-    <input type="date" id="date">
-
-    <label>Hora</label>
-    <input type="time" id="time">
-
-    <label>Descripción</label>
-    <textarea id="description" placeholder="Breve descripción"></textarea>
-
-    <label>Ubicación</label>
-    <div id="map"></div>
-    <input type="hidden" id="location">
-
-    <button onclick="saveEvent()">Guardar</button>
-    <button onclick="hideForm()">Cancelar</button>
+    <button onclick="saveEvent()">✅ Guardar evento</button>
+    <button onclick="hideForm()">❌ Cancelar</button>
   </div>
 
-  <div id="event-list" style="display:none;"></div>
-
+  <!-- Nuestro script principal -->
   <script src="script.js"></script>
 </body>
 </html>
