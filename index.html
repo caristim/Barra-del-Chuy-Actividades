@@ -1,210 +1,59 @@
-// ==================== CONFIGURACIÓN DE FIREBASE ====================
-const firebaseConfig = {
-  apiKey: "AIzaSyAbO_rEyrHMhAC68Qflr6ZXByVdYKSA2Ao",
-  authDomain: "barra-del-chuy-eventos.firebaseapp.com",
-  projectId: "barra-del-chuy-eventos",
-  storageBucket: "barra-del-chuy-eventos.firebasestorage.app",
-  messagingSenderId: "414247219366",
-  appId: "1:414247219366:web:4fb5d257effc6ed2db0467",
-  measurementId: "G-2L680N3SE9"
-};
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Barra del Chuy – Actividades todo el año</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Firebase compat (v9) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+  <!-- Leaflet CSS y JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body>
+  <div class="overlay">
+    <h1>Barra del Chuy</h1>
+    <h2>Actividades todo el año</h2>
+    <p>Tu comunidad, tus actividades, tu lugar</p>
+    <button onclick="showEvents()">📅 Ver eventos</button>
+    <button onclick="showForm()">➕ Agregar evento</button>
+  </div>
 
-// Inicializar Firebase (versión compat)
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+  <!-- Lista de eventos + mapa -->
+  <div id="event-list">
+    <!-- Aquí se mostrará la lista de eventos -->
+    <div id="event-items"></div>
+    <!-- Mapa de ubicaciones de eventos -->
+    <div id="map-list"></div>
+  </div>
 
-// ==================== VARIABLES GLOBALES ====================
-let map = null;
-let marker = null;
-const DEFAULT_LAT = -33.749;
-const DEFAULT_LNG = -53.347;
+  <!-- Formulario para agregar evento -->
+  <div id="event-form" style="display:none;">
+    <h3>Nuevo evento</h3>
+    <input type="text" id="title" placeholder="Título del evento" required>
+    <select id="category">
+      <option value="cultura">🎶 Cultura y música</option>
+      <option value="playa">🏖️ Playa y recreación</option>
+      <option value="feria">🛍️ Ferias y mercados</option>
+      <option value="comunidad">🧑‍🤝‍🧑 Reuniones comunitarias</option>
+    </select>
+    <input type="date" id="date" required>
+    <input type="time" id="time" required>
+    <textarea id="description" placeholder="Descripción" rows="3"></textarea>
+    
+    <div class="location-group">
+      <label>Ubicación (lat, lng):</label>
+      <input type="text" id="location" placeholder="Ej: -33.749, -53.347">
+      <div id="map" style="height:300px; width:100%; margin:10px 0;"></div>
+      <small>Haz clic en el mapa o arrastra el marcador para elegir la ubicación.</small>
+    </div>
 
-// ==================== FUNCIONES DE INTERFAZ ====================
+    <button onclick="saveEvent()">✅ Guardar evento</button>
+    <button onclick="hideForm()">❌ Cancelar</button>
+  </div>
 
-function showEvents() {
-  const listDiv = document.getElementById('event-list');
-  const formDiv = document.getElementById('event-form');
-  listDiv.style.display = 'block';
-  formDiv.style.display = 'none';
-  listDiv.innerHTML = '<p>Cargando eventos...</p>';
-
-  console.log('📡 Intentando leer eventos de Firestore...');
-
-  db.collection('eventos')
-    .orderBy('fecha', 'desc')
-    .get()
-    .then((querySnapshot) => {
-      console.log('✅ Eventos obtenidos:', querySnapshot.size);
-      if (querySnapshot.empty) {
-        listDiv.innerHTML = '<p>No hay eventos aún. ¡Sé el primero en agregar uno!</p>';
-        return;
-      }
-      let html = '';
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        console.log('📄 Documento:', doc.id, data);
-        const fecha = data.fecha ? data.fecha.toDate ? data.fecha.toDate().toLocaleString() : data.fecha : 'Sin fecha';
-        const titulo = data.titulo || 'Sin título';
-        const categoria = data.categoria || 'General';
-        const desc = data.descripcion || '';
-        const ubicacion = data.ubicacion || 'No especificada';
-        html += `
-          <div class="event-item">
-            <div class="event-title">${titulo}</div>
-            <div class="event-meta">
-              <span>📅 ${fecha}</span> &bull; 
-              <span>📂 ${categoria}</span> &bull; 
-              <span>📍 ${ubicacion}</span>
-            </div>
-            ${desc ? `<div class="event-desc">${desc}</div>` : ''}
-          </div>
-        `;
-      });
-      listDiv.innerHTML = html;
-    })
-    .catch((error) => {
-      console.error('❌ Error al obtener eventos:', error);
-      listDiv.innerHTML = `<p>❌ Error al cargar eventos: ${error.message}</p>`;
-    });
-}
-
-function showForm() {
-  const listDiv = document.getElementById('event-list');
-  const formDiv = document.getElementById('event-form');
-  listDiv.style.display = 'none';
-  formDiv.style.display = 'block';
-
-  if (map) {
-    setTimeout(() => {
-      map.invalidateSize();
-      const locInput = document.getElementById('location');
-      const coords = locInput.value.split(',').map(Number);
-      if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
-        marker.setLatLng([coords[0], coords[1]]);
-        map.setView([coords[0], coords[1]], 13);
-      }
-    }, 300);
-  } else {
-    initMap();
-  }
-}
-
-function hideForm() {
-  document.getElementById('event-form').style.display = 'none';
-  document.getElementById('event-list').style.display = 'block';
-  showEvents();
-}
-
-// ==================== MAPA (Leaflet) ====================
-function initMap() {
-  const mapContainer = document.getElementById('map');
-  if (!mapContainer) {
-    console.error('Contenedor del mapa no encontrado');
-    return;
-  }
-  if (map) {
-    map.invalidateSize();
-    return;
-  }
-
-  map = L.map('map').setView([DEFAULT_LAT, DEFAULT_LNG], 13);
-
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-  }).addTo(map);
-
-  marker = L.marker([DEFAULT_LAT, DEFAULT_LNG], { draggable: true }).addTo(map);
-
-  marker.on('dragend', function () {
-    const pos = marker.getLatLng();
-    document.getElementById('location').value = `${pos.lat}, ${pos.lng}`;
-  });
-
-  map.on('click', function (e) {
-    const latlng = e.latlng;
-    marker.setLatLng(latlng);
-    document.getElementById('location').value = `${latlng.lat}, ${latlng.lng}`;
-  });
-
-  const locationInput = document.getElementById('location');
-  locationInput.addEventListener('change', function () {
-    const coords = this.value.trim().split(',').map(Number);
-    if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
-      marker.setLatLng([coords[0], coords[1]]);
-      map.setView([coords[0], coords[1]], 13);
-    }
-  });
-
-  locationInput.value = `${DEFAULT_LAT}, ${DEFAULT_LNG}`;
-
-  setTimeout(() => {
-    if (map) map.invalidateSize();
-  }, 500);
-}
-
-// ==================== GUARDAR EVENTO ====================
-function saveEvent() {
-  const titulo = document.getElementById('title').value.trim();
-  const categoria = document.getElementById('category').value;
-  const fechaInput = document.getElementById('date').value;
-  const horaInput = document.getElementById('time').value;
-  const descripcion = document.getElementById('description').value.trim();
-  const ubicacionStr = document.getElementById('location').value.trim();
-
-  if (!titulo) { alert('⚠️ Escribe un título.'); return; }
-  if (!fechaInput) { alert('⚠️ Selecciona una fecha.'); return; }
-  if (!horaInput) { alert('⚠️ Selecciona una hora.'); return; }
-  if (!ubicacionStr) { alert('⚠️ Indica una ubicación.'); return; }
-
-  const coords = ubicacionStr.split(',').map(s => parseFloat(s.trim()));
-  if (coords.length !== 2 || isNaN(coords[0]) || isNaN(coords[1])) {
-    alert('⚠️ Ubicación debe ser: lat, lng (ej: -33.749, -53.347)');
-    return;
-  }
-
-  const fechaHora = new Date(`${fechaInput}T${horaInput}:00`);
-  if (isNaN(fechaHora.getTime())) {
-    alert('⚠️ Fecha u hora inválida.');
-    return;
-  }
-
-  const data = {
-    titulo: titulo,
-    categoria: categoria,
-    fecha: fechaHora,
-    fechaStr: fechaInput,
-    hora: horaInput,
-    descripcion: descripcion,
-    ubicacion: `${coords[0]}, ${coords[1]}`,
-    lat: coords[0],
-    lng: coords[1],
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  };
-
-  console.log('📤 Intentando guardar evento:', data);
-
-  db.collection('eventos')
-    .add(data)
-    .then((docRef) => {
-      console.log('✅ Evento guardado con ID:', docRef.id);
-      alert('✅ Evento guardado con éxito.');
-      document.getElementById('title').value = '';
-      document.getElementById('description').value = '';
-      document.getElementById('location').value = `${DEFAULT_LAT}, ${DEFAULT_LNG}`;
-      if (marker) {
-        marker.setLatLng([DEFAULT_LAT, DEFAULT_LNG]);
-        map.setView([DEFAULT_LAT, DEFAULT_LNG], 13);
-      }
-      hideForm();
-    })
-    .catch((error) => {
-      console.error('❌ Error al guardar:', error);
-      alert(`❌ Error al guardar: ${error.message}`);
-    });
-}
-
-// ==================== INICIO ====================
-document.addEventListener('DOMContentLoaded', function () {
-  initMap();
-  showEvents();
-});
+  <script src="script.js"></script>
+</body>
+</html>
