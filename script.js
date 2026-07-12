@@ -19,8 +19,9 @@ let mapList = null;
 let markerGroup = null;
 const DEFAULT_LAT = -33.749;
 const DEFAULT_LNG = -53.347;
+const DEFAULT_ZOOM = 13;
 
-// ==================== FUNCIONES DE INTERFAZ ====================
+// ==================== FUNCIONES ====================
 
 function showEvents() {
   const listDiv = document.getElementById('event-list');
@@ -96,10 +97,15 @@ function initMapList(eventos) {
   const container = document.getElementById('map-list');
   if (!container) return;
 
+  // Si el mapa ya existe, limpiar marcadores anteriores
   if (mapList) {
     if (markerGroup) mapList.removeLayer(markerGroup);
   } else {
-    mapList = L.map('map-list').setView([DEFAULT_LAT, DEFAULT_LNG], 13);
+    // Crear mapa nuevo con zoom inicial más amplio
+    mapList = L.map('map-list', {
+      zoomControl: true,
+      fadeAnimation: true
+    }).setView([DEFAULT_LAT, DEFAULT_LNG], DEFAULT_ZOOM - 1); // zoom un nivel más alejado
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(mapList);
@@ -114,11 +120,27 @@ function initMapList(eventos) {
     L.marker(latlng).bindPopup(popupText).addTo(markerGroup);
   });
 
+  // Ajustar vista para mostrar todos los marcadores, con más padding y un zoom máximo para que no se acerque demasiado
   if (bounds.length > 0) {
-    mapList.fitBounds(bounds, { padding: [30, 30] });
+    // Si hay varios puntos, ajustar a ellos; si solo uno, alejar un poco más
+    if (bounds.length === 1) {
+      // Para un solo marcador, centrar y usar un zoom más alejado
+      const center = bounds[0];
+      mapList.setView(center, DEFAULT_ZOOM - 2); // más alejado aún
+    } else {
+      // Múltiples marcadores: usar fitBounds con padding generoso y maxZoom para evitar demasiado acercamiento
+      mapList.fitBounds(bounds, {
+        padding: [50, 50], // más padding para que los marcadores queden más centrados y se vea más área
+        maxZoom: DEFAULT_ZOOM // no superar este zoom para mantener visión amplia
+      });
+    }
+  } else {
+    // Si no hay bounds (por seguridad), ir a la vista por defecto
+    mapList.setView([DEFAULT_LAT, DEFAULT_LNG], DEFAULT_ZOOM - 1);
   }
 
-  setTimeout(() => { if (mapList) mapList.invalidateSize(); }, 300);
+  // Forzar redimensionado
+  setTimeout(() => { if (mapList) mapList.invalidateSize(); }, 400);
 }
 
 function showForm() {
@@ -150,7 +172,7 @@ function initMapForm() {
   if (!mapContainer) return;
   if (map) { map.invalidateSize(); return; }
 
-  map = L.map('map').setView([DEFAULT_LAT, DEFAULT_LNG], 13);
+  map = L.map('map').setView([DEFAULT_LAT, DEFAULT_LNG], DEFAULT_ZOOM);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap'
   }).addTo(map);
@@ -171,7 +193,7 @@ function initMapForm() {
     const coords = this.value.trim().split(',').map(Number);
     if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
       marker.setLatLng([coords[0], coords[1]]);
-      map.setView([coords[0], coords[1]], 13);
+      map.setView([coords[0], coords[1]], DEFAULT_ZOOM);
     }
   });
   locInput.value = `${DEFAULT_LAT}, ${DEFAULT_LNG}`;
@@ -221,7 +243,7 @@ function saveEvent() {
       document.getElementById('location').value = `${DEFAULT_LAT}, ${DEFAULT_LNG}`;
       if (marker) {
         marker.setLatLng([DEFAULT_LAT, DEFAULT_LNG]);
-        map.setView([DEFAULT_LAT, DEFAULT_LNG], 13);
+        map.setView([DEFAULT_LAT, DEFAULT_LNG], DEFAULT_ZOOM);
       }
       hideForm();
     })
