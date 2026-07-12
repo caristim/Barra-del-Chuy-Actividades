@@ -109,7 +109,6 @@ small {
   margin: 4px 0 12px 0;
 }
 
-/* Responsive */
 @media (max-width: 600px) {
   button {
     width: 90%;
