@@ -9,13 +9,14 @@ const firebaseConfig = {
   measurementId: "G-2L680N3SE9"
 };
 
-// Inicializar Firebase (versión compat)
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // ==================== VARIABLES GLOBALES ====================
-let map = null;
+let map = null;          // mapa del formulario
 let marker = null;
+let mapList = null;      // mapa de la lista de eventos
+let markerGroup = null;  // grupo de marcadores en el mapa de lista
 const DEFAULT_LAT = -33.749;
 const DEFAULT_LNG = -53.347;
 
@@ -26,7 +27,12 @@ function showEvents() {
   const formDiv = document.getElementById('event-form');
   listDiv.style.display = 'block';
   formDiv.style.display = 'none';
-  listDiv.innerHTML = '<p>Cargando eventos...</p>';
+
+  // Mostrar mensaje de carga
+  document.getElementById('event-items').innerHTML = '<p>Cargando eventos...</p>';
+  // Ocultar mapa mientras carga (se mostrará al terminar)
+  const mapListContainer = document.getElementById('map-list');
+  mapListContainer.style.display = 'none';
 
   console.log('📡 Intentando leer eventos de Firestore...');
 
@@ -35,14 +41,19 @@ function showEvents() {
     .get()
     .then((querySnapshot) => {
       console.log('✅ Eventos obtenidos:', querySnapshot.size);
+      const itemsContainer = document.getElementById('event-items');
+
       if (querySnapshot.empty) {
-        listDiv.innerHTML = '<p>No hay eventos aún. ¡Sé el primero en agregar uno!</p>';
+        itemsContainer.innerHTML = '<p>No hay eventos aún. ¡Sé el primero en agregar uno!</p>';
+        mapListContainer.style.display = 'none';
         return;
       }
+
+      // ---------- Construir lista HTML ----------
       let html = '';
+      const eventosConCoords = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
-        console.log('📄 Documento:', doc.id, data);
         const fecha = data.fecha ? data.fecha.toDate ? data.fecha.toDate().toLocaleString() : data.fecha : 'Sin fecha';
         const titulo = data.titulo || 'Sin título';
         const categoria = data.categoria || 'General';
@@ -59,13 +70,74 @@ function showEvents() {
             ${desc ? `<div class="event-desc">${desc}</div>` : ''}
           </div>
         `;
+
+        // Guardar coordenadas para el mapa si existen
+        if (data.lat && data.lng) {
+          eventosConCoords.push({
+            lat: data.lat,
+            lng: data.lng,
+            titulo: titulo,
+            desc: desc || ''
+          });
+        }
       });
-      listDiv.innerHTML = html;
+      itemsContainer.innerHTML = html;
+
+      // ---------- Mostrar mapa con marcadores ----------
+      if (eventosConCoords.length > 0) {
+        mapListContainer.style.display = 'block';
+        initMapList(eventosConCoords);
+      } else {
+        mapListContainer.style.display = 'none';
+      }
     })
     .catch((error) => {
       console.error('❌ Error al obtener eventos:', error);
-      listDiv.innerHTML = `<p>❌ Error al cargar eventos: ${error.message}</p>`;
+      document.getElementById('event-items').innerHTML = `<p>❌ Error al cargar eventos: ${error.message}</p>`;
+      document.getElementById('map-list').style.display = 'none';
     });
+}
+
+// Inicializar o actualizar el mapa de la lista
+function initMapList(eventos) {
+  const container = document.getElementById('map-list');
+  if (!container) return;
+
+  // Si el mapa ya existe, limpiar marcadores anteriores
+  if (mapList) {
+    if (markerGroup) {
+      mapList.removeLayer(markerGroup);
+    }
+  } else {
+    // Crear mapa por primera vez
+    mapList = L.map('map-list').setView([DEFAULT_LAT, DEFAULT_LNG], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(mapList);
+  }
+
+  // Crear grupo de marcadores
+  markerGroup = L.layerGroup().addTo(mapList);
+
+  // Añadir marcadores
+  const bounds = [];
+  eventos.forEach(ev => {
+    const latlng = [ev.lat, ev.lng];
+    bounds.push(latlng);
+    const popupText = `<strong>${ev.titulo}</strong>${ev.desc ? '<br>' + ev.desc : ''}`;
+    const m = L.marker(latlng).bindPopup(popupText);
+    markerGroup.addLayer(m);
+  });
+
+  // Ajustar vista para que todos los marcadores sean visibles
+  if (bounds.length > 0) {
+    mapList.fitBounds(bounds, { padding: [30, 30] });
+  }
+
+  // Forzar redimensionado (por si el contenedor cambió de tamaño)
+  setTimeout(() => {
+    if (mapList) mapList.invalidateSize();
+  }, 300);
 }
 
 function showForm() {
@@ -85,21 +157,21 @@ function showForm() {
       }
     }, 300);
   } else {
-    initMap();
+    initMapForm();
   }
 }
 
 function hideForm() {
   document.getElementById('event-form').style.display = 'none';
   document.getElementById('event-list').style.display = 'block';
-  showEvents();
+  showEvents(); // recargar lista y mapa
 }
 
-// ==================== MAPA (Leaflet) ====================
-function initMap() {
+// ==================== MAPA DEL FORMULARIO ====================
+function initMapForm() {
   const mapContainer = document.getElementById('map');
   if (!mapContainer) {
-    console.error('Contenedor del mapa no encontrado');
+    console.error('Contenedor del mapa del formulario no encontrado');
     return;
   }
   if (map) {
@@ -205,6 +277,6 @@ function saveEvent() {
 
 // ==================== INICIO ====================
 document.addEventListener('DOMContentLoaded', function () {
-  initMap();
+  initMapForm();
   showEvents();
 });
