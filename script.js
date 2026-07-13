@@ -9,18 +9,21 @@ const firebaseConfig = {
   measurementId: "G-2L680N3SE9"
 };
 
+// Inicializar Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
 // ==================== VARIABLES GLOBALES ====================
-let map = null;
-let marker = null;
-let mapList = null;
-let markerGroup = null;
+// Declarar TODAS las variables primero
+let map = null;          // Mapa del formulario
+let marker = null;       // Marcador del formulario
+let mapList = null;      // Mapa de la lista de eventos
+let markerGroup = null;  // Grupo de marcadores del mapa de lista
+
 const DEFAULT_LAT = -33.749;
 const DEFAULT_LNG = -53.347;
 
-// ==================== FUNCIONES DE INTERFAZ ====================
+// ==================== FUNCIONES ====================
 
 function showEvents() {
   const listDiv = document.getElementById('event-list');
@@ -30,7 +33,9 @@ function showEvents() {
 
   document.getElementById('event-items').innerHTML = '<p>🔄 Cargando eventos...</p>';
   const mapListContainer = document.getElementById('map-list');
-  mapListContainer.style.display = 'none';
+  if (mapListContainer) {
+    mapListContainer.style.display = 'none';
+  }
 
   console.log('📡 Leyendo eventos de Firestore...');
 
@@ -43,7 +48,9 @@ function showEvents() {
 
       if (querySnapshot.empty) {
         itemsContainer.innerHTML = '<p>📭 No hay eventos aún. ¡Sé el primero en agregar uno!</p>';
-        mapListContainer.style.display = 'none';
+        if (mapListContainer) {
+          mapListContainer.style.display = 'none';
+        }
         return;
       }
 
@@ -81,10 +88,14 @@ function showEvents() {
       itemsContainer.innerHTML = html;
 
       if (eventosConCoords.length > 0) {
-        mapListContainer.style.display = 'block';
+        if (mapListContainer) {
+          mapListContainer.style.display = 'block';
+        }
         initMapList(eventosConCoords);
       } else {
-        mapListContainer.style.display = 'none';
+        if (mapListContainer) {
+          mapListContainer.style.display = 'none';
+        }
       }
     })
     .catch((error) => {
@@ -96,27 +107,40 @@ function showEvents() {
         mensajeError += error.message;
       }
       document.getElementById('event-items').innerHTML = `<p>${mensajeError}</p>`;
-      document.getElementById('map-list').style.display = 'none';
+      const mapListContainer = document.getElementById('map-list');
+      if (mapListContainer) {
+        mapListContainer.style.display = 'none';
+      }
     });
 }
 
 function initMapList(eventos) {
   const container = document.getElementById('map-list');
-  if (!container) return;
+  if (!container) {
+    console.error('❌ Contenedor map-list no encontrado');
+    return;
+  }
 
+  // Si el mapa ya existe, limpiar marcadores anteriores
   if (mapList) {
-    if (markerGroup) mapList.removeLayer(markerGroup);
+    if (markerGroup) {
+      mapList.removeLayer(markerGroup);
+    }
   } else {
+    // Crear el mapa si no existe
     mapList = L.map('map-list', {
       maxZoom: 15
     }).setView([DEFAULT_LAT, DEFAULT_LNG], 12);
+    
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
     }).addTo(mapList);
   }
 
+  // Crear grupo de marcadores
   markerGroup = L.layerGroup().addTo(mapList);
   const bounds = [];
+  
   eventos.forEach(ev => {
     const latlng = [ev.lat, ev.lng];
     bounds.push(latlng);
@@ -124,18 +148,27 @@ function initMapList(eventos) {
     L.marker(latlng).bindPopup(popupText).addTo(markerGroup);
   });
 
+  // Ajustar vista
   if (bounds.length > 0) {
     mapList.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
   } else {
     mapList.setView([DEFAULT_LAT, DEFAULT_LNG], 12);
   }
 
-  setTimeout(() => { if (mapList) mapList.invalidateSize(); }, 300);
+  // Forzar redimensionado
+  setTimeout(() => {
+    if (mapList) {
+      mapList.invalidateSize();
+    }
+  }, 300);
 }
 
 function showForm() {
-  document.getElementById('event-list').style.display = 'none';
-  document.getElementById('event-form').style.display = 'block';
+  const listDiv = document.getElementById('event-list');
+  const formDiv = document.getElementById('event-form');
+  listDiv.style.display = 'none';
+  formDiv.style.display = 'block';
+  
   if (map) {
     setTimeout(() => {
       map.invalidateSize();
@@ -152,15 +185,23 @@ function showForm() {
 }
 
 function hideForm() {
-  document.getElementById('event-form').style.display = 'none';
+  const formDiv = document.getElementById('event-form');
+  formDiv.style.display = 'none';
   document.getElementById('event-list').style.display = 'block';
   showEvents();
 }
 
 function initMapForm() {
   const mapContainer = document.getElementById('map');
-  if (!mapContainer) return;
-  if (map) { map.invalidateSize(); return; }
+  if (!mapContainer) {
+    console.error('❌ Contenedor del mapa del formulario no encontrado');
+    return;
+  }
+  
+  if (map) {
+    map.invalidateSize();
+    return;
+  }
 
   map = L.map('map').setView([DEFAULT_LAT, DEFAULT_LNG], 13);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -168,10 +209,12 @@ function initMapForm() {
   }).addTo(map);
 
   marker = L.marker([DEFAULT_LAT, DEFAULT_LNG], { draggable: true }).addTo(map);
+  
   marker.on('dragend', function () {
     const pos = marker.getLatLng();
     document.getElementById('location').value = `${pos.lat}, ${pos.lng}`;
   });
+  
   map.on('click', function (e) {
     const latlng = e.latlng;
     marker.setLatLng(latlng);
@@ -186,8 +229,14 @@ function initMapForm() {
       map.setView([coords[0], coords[1]], 13);
     }
   });
+  
   locInput.value = `${DEFAULT_LAT}, ${DEFAULT_LNG}`;
-  setTimeout(() => { if (map) map.invalidateSize(); }, 500);
+  
+  setTimeout(() => {
+    if (map) {
+      map.invalidateSize();
+    }
+  }, 500);
 }
 
 function saveEvent() {
@@ -210,7 +259,10 @@ function saveEvent() {
   }
 
   const fechaHora = new Date(`${fechaInput}T${horaInput}:00`);
-  if (isNaN(fechaHora.getTime())) { alert('⚠️ Fecha u hora inválida.'); return; }
+  if (isNaN(fechaHora.getTime())) { 
+    alert('⚠️ Fecha u hora inválida.'); 
+    return; 
+  }
 
   const data = {
     titulo: titulo,
@@ -246,8 +298,10 @@ function saveEvent() {
     });
 }
 
-// Inicio
+// ==================== INICIO ====================
+// Asegurar que todo se carga cuando el DOM está listo
 document.addEventListener('DOMContentLoaded', function () {
+  console.log('🚀 Iniciando aplicación...');
   initMapForm();
   showEvents();
 });
