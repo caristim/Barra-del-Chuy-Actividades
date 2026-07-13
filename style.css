@@ -1,3 +1,4 @@
+/* Reset y estilos base */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -9,17 +10,19 @@ body {
   text-align: center;
   background: url('playa-barra-chuy.jpg') no-repeat center center fixed;
   background-size: cover;
-  background-color: #1a1a2e; /* color de respaldo si la imagen no carga */
   color: white;
   min-height: 100vh;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .overlay {
   background: rgba(0, 0, 0, 0.6);
   padding: 20px;
   margin-bottom: 20px;
+  border-radius: 0 0 12px 12px;
 }
 
 h1, h2, p {
@@ -43,7 +46,7 @@ button:hover {
 }
 
 #event-list {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.92);
   color: #222;
   max-width: 900px;
   margin: 20px auto;
@@ -51,7 +54,7 @@ button:hover {
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   text-align: left;
-  display: block;
+  flex: 1;
 }
 
 #event-items .event-item {
@@ -71,6 +74,16 @@ button:hover {
 }
 #event-items .event-desc {
   margin-top: 6px;
+}
+#event-items .event-flyer {
+  margin-top: 10px;
+  max-width: 100%;
+}
+#event-items .event-flyer img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  border: 2px solid #ff9800;
 }
 
 #map-list {
@@ -109,6 +122,37 @@ button:hover {
 #event-form textarea {
   resize: vertical;
 }
+.upload-group {
+  margin: 12px 0;
+}
+.upload-group label {
+  font-weight: bold;
+  display: block;
+  margin-bottom: 4px;
+}
+.upload-group input[type="file"] {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  width: 100%;
+}
+.upload-group progress {
+  height: 20px;
+  border-radius: 4px;
+}
+.upload-group small {
+  color: #666;
+  font-size: 0.8em;
+}
+#flyerPreview {
+  margin: 10px 0;
+}
+#flyerPreview img {
+  max-width: 100%;
+  max-height: 200px;
+  border-radius: 8px;
+  border: 2px solid #ff9800;
+}
 .location-group label {
   font-weight: bold;
   display: block;
@@ -124,6 +168,16 @@ small {
   margin: 4px 0 12px 0;
 }
 
+footer {
+  text-align: center;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 14px;
+  background: rgba(0, 0, 0, 0.5);
+  margin-top: 30px;
+  flex-shrink: 0;
+}
+
 @media (max-width: 600px) {
   button {
     width: 90%;
@@ -136,5 +190,8 @@ small {
   }
   #map-list {
     height: 250px;
+  }
+  #event-items .event-flyer img {
+    max-height: 200px;
   }
 }
